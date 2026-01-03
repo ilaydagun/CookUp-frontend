@@ -374,7 +374,7 @@ export default function Meals() {
         strCategory: selected.strCategory,
         strArea: selected.strArea,
       };
-      await api.post("/favorites", mealData);
+      await api.post("/favorites/", mealData);
       setOpen(false);
       navigate("/favorites");
     } catch (err) {
@@ -388,7 +388,7 @@ export default function Meals() {
     if (!selected || !value) return;
     setRatingLoading(true);
     try {
-      await api.post("/ratings", {
+      await api.post("/ratings/", {
         mealId: selected.idMeal,
         value,
       });
