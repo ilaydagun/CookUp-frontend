@@ -121,7 +121,30 @@ function MealCard({ meal, onOpen }) {
   );
 }
 
-function Modal({ open, onClose, meal, details, loading, error, onNavigate }) {
+function StarRating({ value, onChange }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          onClick={() => onChange(star)}
+          className="p-1 hover:scale-110 transition-transform"
+        >
+          <svg
+            className={`w-6 h-6 ${star <= value ? "text-amber-400" : "text-white/30"}`}
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Modal({ open, onClose, meal, details, loading, error, onNavigate, onAddFavorite, favoriteLoading, onRate, ratingLoading }) {
+  const [ratingValue, setRatingValue] = useState(0);
   const d = details || meal;
 
   const ingredients = useMemo(() => {
@@ -184,17 +207,22 @@ function Modal({ open, onClose, meal, details, loading, error, onNavigate }) {
                       Add to Planner
                     </button>
                     <button
-                      className="px-5 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15"
-                      onClick={() => onNavigate("/favorites")}
+                      className="px-5 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 disabled:opacity-50"
+                      onClick={onAddFavorite}
+                      disabled={favoriteLoading}
                     >
-                      Favorite
+                      {favoriteLoading ? "Adding..." : "Favorite"}
                     </button>
-                    <button
-                      className="px-5 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15"
-                      onClick={() => onNavigate("/ratings")}
-                    >
-                      Rate
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <StarRating value={ratingValue} onChange={setRatingValue} />
+                      <button
+                        className="px-4 py-2 rounded-xl bg-amber-500 text-zinc-950 font-semibold hover:bg-amber-400 disabled:opacity-50"
+                        onClick={() => onRate(ratingValue)}
+                        disabled={ratingLoading || ratingValue === 0}
+                      >
+                        {ratingLoading ? "..." : "Rate"}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
@@ -246,6 +274,8 @@ export default function Meals() {
   const [details, setDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsErr, setDetailsErr] = useState("");
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [ratingLoading, setRatingLoading] = useState(false);
 
   const cuisines = [
     "All",
@@ -330,6 +360,44 @@ export default function Meals() {
       }
     } finally {
       setDetailsLoading(false);
+    }
+  }
+
+  async function addToFavorites() {
+    if (!selected) return;
+    setFavoriteLoading(true);
+    try {
+      const mealData = {
+        mealId: selected.idMeal,
+        strMeal: selected.strMeal,
+        strMealThumb: selected.strMealThumb,
+        strCategory: selected.strCategory,
+        strArea: selected.strArea,
+      };
+      await api.post("/favorites", mealData);
+      setOpen(false);
+      navigate("/favorites");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to add favorite");
+    } finally {
+      setFavoriteLoading(false);
+    }
+  }
+
+  async function submitRating(value) {
+    if (!selected || !value) return;
+    setRatingLoading(true);
+    try {
+      await api.post("/ratings", {
+        mealId: selected.idMeal,
+        value,
+      });
+      setOpen(false);
+      navigate("/ratings");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to submit rating");
+    } finally {
+      setRatingLoading(false);
     }
   }
 
@@ -486,6 +554,10 @@ export default function Meals() {
           setOpen(false);
           navigate(path);
         }}
+        onAddFavorite={addToFavorites}
+        favoriteLoading={favoriteLoading}
+        onRate={submitRating}
+        ratingLoading={ratingLoading}
       />
     </div>
   );
