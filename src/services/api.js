@@ -4,7 +4,7 @@ import { getToken } from "./auth";
 // Render backend URL (env) varsa onu kullan, yoksa local backend'e düş
 const BASE =
   import.meta.env.VITE_API_URL?.trim() ||
-  "http://localhost:5000/api";
+  (import.meta.env.DEV ? "http://localhost:5000/api" : "/api");
 
 const api = axios.create({
   baseURL: BASE,
