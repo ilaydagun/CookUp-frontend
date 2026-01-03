@@ -2,7 +2,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://cookup-lt1k.onrender.com/api/$1"
+      "dest": "https://cookup-l1tk.onrender.com/api/$1"
     },
     {
       "handle": "filesystem"
