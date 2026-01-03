@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import api from "../services/api";
 
@@ -120,8 +121,7 @@ function MealCard({ meal, onOpen }) {
   );
 }
 
-function Modal({ open, onClose, meal, details, loading, error }) {
-  if (!open) return null;
+function Modal({ open, onClose, meal, details, loading, error, onNavigate }) {
   const d = details || meal;
 
   const ingredients = useMemo(() => {
@@ -135,6 +135,8 @@ function Modal({ open, onClose, meal, details, loading, error }) {
     }
     return arr;
   }, [d]);
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm">
@@ -175,13 +177,22 @@ function Modal({ open, onClose, meal, details, loading, error }) {
 
                 <div className="space-y-6">
                   <div className="flex flex-wrap gap-2">
-                    <button className="px-5 py-3 rounded-2xl bg-white text-zinc-950 font-semibold hover:opacity-90">
+                    <button
+                      className="px-5 py-3 rounded-2xl bg-white text-zinc-950 font-semibold hover:opacity-90"
+                      onClick={() => onNavigate("/planner")}
+                    >
                       Add to Planner
                     </button>
-                    <button className="px-5 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15">
+                    <button
+                      className="px-5 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15"
+                      onClick={() => onNavigate("/favorites")}
+                    >
                       Favorite
                     </button>
-                    <button className="px-5 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15">
+                    <button
+                      className="px-5 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15"
+                      onClick={() => onNavigate("/ratings")}
+                    >
                       Rate
                     </button>
                   </div>
@@ -201,9 +212,7 @@ function Modal({ open, onClose, meal, details, loading, error }) {
                     <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
                       <p className="text-xs text-white/60">Notes</p>
                       <p className="mt-3 text-sm text-white/75">
-                        UI is wired and resilient. Next we’ll connect favorites,
-                        planner and ratings to your backend once Firebase env is
-                        fixed.
+                        {d?.strTags ? `Tags: ${d.strTags}` : "No notes available for this meal."}
                       </p>
                     </div>
                   </div>
@@ -225,6 +234,7 @@ function Modal({ open, onClose, meal, details, loading, error }) {
 }
 
 export default function Meals() {
+  const navigate = useNavigate();
   const [q, setQ] = useState("chicken");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -472,6 +482,10 @@ export default function Meals() {
         details={details}
         loading={detailsLoading}
         error={detailsErr}
+        onNavigate={(path) => {
+          setOpen(false);
+          navigate(path);
+        }}
       />
     </div>
   );
