@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import api from "../services/api";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 function Badge({ children }) {
   return (
@@ -22,6 +22,7 @@ function Field({ label, children, hint }) {
 
 export default function Register() {
   const nav = useNavigate();
+  const { register } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,16 +52,19 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const res = await api.post("/auth/register", { email, password });
+      await register(email, password);
       setOk(true);
-      setMsg(res?.data?.message || "Account created ✅ You can login now.");
-      // küçük bekleme yerine direkt yönlendirme
-      setTimeout(() => nav("/login"), 400);
-    } catch (err) {
+      setMsg("Account created! Redirecting...");
+      setTimeout(() => nav("/meals"), 400);
+    } catch (error) {
       setOk(false);
-      setMsg(
-        err?.response?.data?.message || err?.message || "Registration failed."
-      );
+      const errorMessages = {
+        "auth/email-already-in-use": "This email is already registered.",
+        "auth/invalid-email": "Invalid email address.",
+        "auth/weak-password": "Password should be at least 6 characters.",
+        "auth/operation-not-allowed": "Registration is currently disabled.",
+      };
+      setMsg(errorMessages[error.code] || error.message || "Registration failed.");
     } finally {
       setLoading(false);
     }
@@ -114,6 +118,7 @@ export default function Register() {
           <div className="mt-6 grid gap-4">
             <Field label="Email">
               <input
+                type="email"
                 className="w-full px-4 py-3 rounded-2xl bg-zinc-950/70 border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"
                 placeholder="you@example.com"
                 value={email}
